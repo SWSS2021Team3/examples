@@ -1,2 +1,2 @@
-del RecvImageTCP.exe
+del ..\build\RecvImageTCP.exe
 del *.obj

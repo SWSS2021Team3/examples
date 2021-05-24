@@ -1,2 +1,2 @@
-del SendImageUDP.exe
+del ..\build\SendImageUDP.exe
 del *.obj

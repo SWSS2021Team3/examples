@@ -53,6 +53,9 @@ int main(int argc, char *argv[])
   int framerate = 60;
   int flip_method = 2;
 
+#if  defined(_WIN32) || defined(_WIN64)
+  cv::VideoCapture capture(0, cv::CAP_ANY);
+#else
   std::string pipeline = gstreamer_pipeline(capture_width,
                                             capture_height,
                                             display_width,
@@ -62,6 +65,7 @@ int main(int argc, char *argv[])
   std::cout << "Using pipeline: \n\t" << pipeline << "\n";
 
   cv::VideoCapture capture(pipeline, cv::CAP_GSTREAMER);
+#endif
   if (!capture.isOpened())
   {
     std::cout << "Failed to open camera." << std::endl;
