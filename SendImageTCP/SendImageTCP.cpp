@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
   int framerate = 60;
   int flip_method = 2;
 
-#if  defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32) || defined(_WIN64)
   cv::VideoCapture capture(0, cv::CAP_ANY);
 #else
   std::string pipeline = gstreamer_pipeline(capture_width,
@@ -72,56 +72,60 @@ int main(int argc, char *argv[])
     return (-1);
   }
 
-  if ((TcpListenPort = OpenTcpListenPort(atoi(argv[1]))) == NULL) // Open UDP Network port
+  while (true)
   {
-    printf("OpenTcpListenPortFailed\n");
-    return (-1);
-  }
 
-  clilen = sizeof(cli_addr);
-
-  printf("Listening for connections\n");
-
-  if ((TcpConnectedPort = AcceptTcpConnection(TcpListenPort, &cli_addr, &clilen)) == NULL)
-  {
-    printf("AcceptTcpConnection Failed\n");
-    return (-1);
-  }
-
-  printf("Accepted connection Request\n");
-
-  do
-  {
-    // wait for a new frame from camera and store it into 'frame'
-    capture.read(image);
-    // check if we succeeded
-    if (image.empty())
+    if ((TcpListenPort = OpenTcpListenPort(atoi(argv[1]))) == NULL) // Open UDP Network port
     {
-      printf("ERROR! blank frame grabbed\n");
-      continue;
+      printf("OpenTcpListenPortFailed\n");
+      return (-1);
     }
+
+    clilen = sizeof(cli_addr);
+
+    printf("Listening for connections\n");
+
+    if ((TcpConnectedPort = AcceptTcpConnection(TcpListenPort, &cli_addr, &clilen)) == NULL)
+    {
+      printf("AcceptTcpConnection Failed\n");
+      return (-1);
+    }
+
+    printf("Accepted connection Request\n");
+
+    do
+    {
+      // wait for a new frame from camera and store it into 'frame'
+      capture.read(image);
+      // check if we succeeded
+      if (image.empty())
+      {
+        printf("ERROR! blank frame grabbed\n");
+        continue;
+      }
 #if 0	
-   cudaRGBA32ToBGR8(image, (uchar3*)rgb_gpu, capture_width, capture_height );      
-        
-   cv::cuda::GpuMat imgRGB_gpu(imgHeight, capture_height, CV_8UC3, rgb_gpu);                
+    cudaRGBA32ToBGR8(image, (uchar3*)rgb_gpu, capture_width, capture_height );
 
-   std::vector<struct Bbox> detections;
-   finder.findFace(imgRGB_gpu, &detections);
+    cv::cuda::GpuMat imgRGB_gpu(imgHeight, capture_height, CV_8UC3, rgb_gpu);
 
-   std::vector<cv::Rect> rects;
-   std::vector<float*> keypoints;
-   num_dets = get_detections(origin_cpu, &detections, &rects, &keypoints);
+    std::vector<struct Bbox> detections;
+    finder.findFace(imgRGB_gpu, &detections);
+
+    std::vector<cv::Rect> rects;
+    std::vector<float*> keypoints;
+    num_dets = get_detections(origin_cpu, &detections, &rects, &keypoints);
 #endif
 
-    // Send processed UDP image
-    if (TcpSendImageAsJpeg(TcpConnectedPort, image) < 0)
-      break;
-    key = (waitKey(10) & 0xFF);
-    printf("%d\n", key);
-  } while (key != 'q'); // loop until user hits quit
+      // Send processed UDP image
+      if (TcpSendImageAsJpeg(TcpConnectedPort, image) < 0)
+        break;
+      key = (waitKey(10) & 0xFF);
+      printf("%d\n", key);
+    } while (key != 'q'); // loop until user hits quit
 
-  CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
-  CloseTcpListenPort(&TcpListenPort);       // Close listen port
+    CloseTcpConnectedPort(&TcpConnectedPort); // Close network port;
+    CloseTcpListenPort(&TcpListenPort);       // Close listen port
+  }
 
   return 0;
 }
